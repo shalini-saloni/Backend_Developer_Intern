@@ -12,6 +12,7 @@ type Task = {
 export default function App() {
   const [mode, setMode] = useState<"login" | "register" | "dashboard">("login");
   const [msg, setMsg] = useState<string>("");
+  const [showMsg, setShowMsg] = useState(false);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,6 +21,9 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -27,26 +31,30 @@ export default function App() {
     if (token) setMode("dashboard");
   }, [token]);
 
+  function showNotification(message: string) {
+    setMsg(message);
+    setShowMsg(true);
+    setTimeout(() => setShowMsg(false), 2000);
+  }
+
   async function register() {
-    setMsg("");
     try {
       const res = await api.post("/auth/register", { name, email, password });
-      setMsg(res.data.message);
+      showNotification(res.data.message);
       setMode("login");
     } catch (e: any) {
-      setMsg(e?.response?.data?.error?.message ?? "Error");
+      showNotification(e?.response?.data?.error?.message ?? "Error");
     }
   }
 
   async function login() {
-    setMsg("");
     try {
       const res = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", res.data.data.token);
       setMode("dashboard");
       await loadTasks();
     } catch (e: any) {
-      setMsg(e?.response?.data?.error?.message ?? "Error");
+      showNotification(e?.response?.data?.error?.message ?? "Error");
     }
   }
 
@@ -56,16 +64,40 @@ export default function App() {
   }
 
   async function createTask() {
-    setMsg("");
     try {
       await api.post("/tasks", { title, description });
       setTitle("");
       setDescription("");
-      setMsg("Task created successfully!");
+      showNotification("Task created successfully!");
       await loadTasks();
     } catch (e: any) {
-      setMsg(e?.response?.data?.error?.message ?? "Error");
+      showNotification(e?.response?.data?.error?.message ?? "Error");
     }
+  }
+
+  async function updateTask() {
+    try {
+      await api.patch(`/tasks/${editingId}`, { title: editTitle, description: editDescription });
+      setEditingId(null);
+      setEditTitle("");
+      setEditDescription("");
+      showNotification("Task updated successfully!");
+      await loadTasks();
+    } catch (e: any) {
+      showNotification(e?.response?.data?.error?.message ?? "Error");
+    }
+  }
+
+  function startEdit(task: Task) {
+    setEditingId(task.id);
+    setEditTitle(task.title);
+    setEditDescription(task.description || "");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditTitle("");
+    setEditDescription("");
   }
 
   async function deleteTask(id: string) {
@@ -133,7 +165,7 @@ export default function App() {
             Sign In
           </button>
 
-          {msg && <div className={`message ${msg.includes("Error") ? "error" : "success"}`}>{msg}</div>}
+          {showMsg && <div className={`message pop-fade ${msg.includes("Error") ? "error" : "success"}`}>{msg}</div>}
         </div>
       </div>
     );
@@ -180,7 +212,7 @@ export default function App() {
             Create Account
           </button>
 
-          {msg && <div className={`message ${msg.includes("Error") ? "error" : "success"}`}>{msg}</div>}
+          {showMsg && <div className={`message pop-fade ${msg.includes("Error") ? "error" : "success"}`}>{msg}</div>}
         </div>
       </div>
     );
@@ -189,19 +221,19 @@ export default function App() {
   return (
     <div className="dashboard-container fade-in">
       <div className="dashboard-header">
-        <h2 className="dashboard-title">My Tasks</h2>
+        <h2 className="dashboard-title">PlanBoard</h2>
         <div className="header-actions">
           <button className="btn-secondary" onClick={loadTasks}>
-            🔄 Refresh
+            Refresh
           </button>
           <button className="btn-danger" onClick={logout}>
-            🚪 Logout
+             Logout
           </button>
         </div>
       </div>
 
       <div className="create-task-section">
-        <h3>✨ Create New Task</h3>
+        <h3>Create New Task</h3>
 
         <div className="form-row">
           <div className="form-group">
@@ -229,35 +261,69 @@ export default function App() {
           ➕ Create Task
         </button>
 
-        {msg && <div className={`message ${msg.includes("Error") ? "error" : "success"}`}>{msg}</div>}
+        {showMsg && <div className={`message pop-fade ${msg.includes("Error") ? "error" : "success"}`}>{msg}</div>}
       </div>
 
       <div className="tasks-section">
-        <h3>📋 Your Tasks ({tasks.length})</h3>
+        <h3>Your Tasks ({tasks.length})</h3>
 
         {tasks.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">📝</div>
+            <div className="empty-state-icon"></div>
             <p>No tasks yet. Create your first task above!</p>
           </div>
         ) : (
           <div className="tasks-grid">
             {tasks.map((t) => (
               <div key={t.id} className="task-card">
-                <div className="task-header">
-                  <h4 className="task-title">{t.title}</h4>
-                  <span className={`task-status ${getStatusClass(t.status)}`}>
-                    {t.status.replace("_", " ")}
-                  </span>
-                </div>
+                {editingId === t.id ? (
+                  <div className="task-edit-form">
+                    <div className="form-group">
+                      <label className="form-label">Title</label>
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Description</label>
+                      <input
+                        type="text"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                      />
+                    </div>
+                    <div className="task-actions">
+                      <button className="btn-primary" onClick={updateTask}>
+                        ✓ Save
+                      </button>
+                      <button className="btn-secondary" onClick={cancelEdit}>
+                        ✗ Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="task-header">
+                      <h4 className="task-title">{t.title}</h4>
+                      <span className={`task-status ${getStatusClass(t.status)}`}>
+                        {t.status.replace("_", " ")}
+                      </span>
+                    </div>
 
-                {t.description && <p className="task-description">{t.description}</p>}
+                    {t.description && <p className="task-description">{t.description}</p>}
 
-                <div className="task-actions">
-                  <button className="btn-danger" onClick={() => deleteTask(t.id)}>
-                    🗑️ Delete
-                  </button>
-                </div>
+                    <div className="task-actions">
+                      <button className="btn-secondary" onClick={() => startEdit(t)}>
+                        Edit
+                      </button>
+                      <button className="btn-danger" onClick={() => deleteTask(t.id)}>
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
