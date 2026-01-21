@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
+import "./App.css";
 
 type Task = {
   id: string;
@@ -60,7 +61,7 @@ export default function App() {
       await api.post("/tasks", { title, description });
       setTitle("");
       setDescription("");
-      setMsg("Task created");
+      setMsg("Task created successfully!");
       await loadTasks();
     } catch (e: any) {
       setMsg(e?.response?.data?.error?.message ?? "Error");
@@ -77,64 +78,191 @@ export default function App() {
     setMode("login");
   }
 
+  function getStatusClass(status: string) {
+    return status.toLowerCase().replace("_", "-");
+  }
+
   if (mode === "register") {
     return (
-      <div style={{ maxWidth: 420, margin: "40px auto", fontFamily: "sans-serif" }}>
-        <h2>Register</h2>
-        <input placeholder="name" value={name} onChange={e => setName(e.target.value)} />
-        <br />
-        <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
-        <br />
-        <input placeholder="password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-        <br /><br />
-        <button onClick={register}>Register</button>
-        <button onClick={() => setMode("login")} style={{ marginLeft: 10 }}>Go to Login</button>
-        <p>{msg}</p>
+      <div className="app-container">
+        <div className="card auth-card fade-in">
+          <div className="auth-header">
+            <h2>Create Account</h2>
+            <p className="auth-subtitle">Join us to manage your tasks efficiently</p>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Full Name</label>
+            <input
+              type="text"
+              placeholder="Enter your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input
+              type="password"
+              placeholder="Create a password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <button className="btn-primary" onClick={register}>
+            Create Account
+          </button>
+
+          <div className="divider">
+            <span>Already have an account?</span>
+          </div>
+
+          <button className="btn-secondary" onClick={() => setMode("login")}>
+            Sign In
+          </button>
+
+          {msg && <div className={`message ${msg.includes("Error") ? "error" : "success"}`}>{msg}</div>}
+        </div>
       </div>
     );
   }
 
   if (mode === "login") {
     return (
-      <div style={{ maxWidth: 420, margin: "40px auto", fontFamily: "sans-serif" }}>
-        <h2>Login</h2>
-        <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
-        <br />
-        <input placeholder="password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-        <br /><br />
-        <button onClick={login}>Login</button>
-        <button onClick={() => setMode("register")} style={{ marginLeft: 10 }}>Go to Register</button>
-        <p>{msg}</p>
+      <div className="app-container">
+        <div className="card auth-card fade-in">
+          <div className="auth-header">
+            <h2>Welcome Back</h2>
+            <p className="auth-subtitle">Sign in to continue to your dashboard</p>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <button className="btn-primary" onClick={login}>
+            Sign In
+          </button>
+
+          <div className="divider">
+            <span>Don't have an account?</span>
+          </div>
+
+          <button className="btn-secondary" onClick={() => setMode("register")}>
+            Create Account
+          </button>
+
+          {msg && <div className={`message ${msg.includes("Error") ? "error" : "success"}`}>{msg}</div>}
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 700, margin: "40px auto", fontFamily: "sans-serif" }}>
-      <h2>Dashboard</h2>
-      <button onClick={logout}>Logout</button>
-      <button onClick={loadTasks} style={{ marginLeft: 10 }}>Refresh</button>
+    <div className="dashboard-container fade-in">
+      <div className="dashboard-header">
+        <h2 className="dashboard-title">My Tasks</h2>
+        <div className="header-actions">
+          <button className="btn-secondary" onClick={loadTasks}>
+            🔄 Refresh
+          </button>
+          <button className="btn-danger" onClick={logout}>
+            🚪 Logout
+          </button>
+        </div>
+      </div>
 
-      <h3 style={{ marginTop: 30 }}>Create Task</h3>
-      <input placeholder="title" value={title} onChange={e => setTitle(e.target.value)} />
-      <br />
-      <input placeholder="description" value={description} onChange={e => setDescription(e.target.value)} />
-      <br /><br />
-      <button onClick={createTask}>Create</button>
+      <div className="create-task-section">
+        <h3>✨ Create New Task</h3>
 
-      <p>{msg}</p>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Task Title</label>
+            <input
+              type="text"
+              placeholder="Enter task title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
 
-      <h3 style={{ marginTop: 30 }}>Tasks</h3>
-      <ul>
-        {tasks.map(t => (
-          <li key={t.id} style={{ marginBottom: 10 }}>
-            <b>{t.title}</b> - {t.status} <br />
-            {t.description}
-            <br />
-            <button onClick={() => deleteTask(t.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <input
+              type="text"
+              placeholder="Enter description (optional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <button className="btn-primary" onClick={createTask}>
+          ➕ Create Task
+        </button>
+
+        {msg && <div className={`message ${msg.includes("Error") ? "error" : "success"}`}>{msg}</div>}
+      </div>
+
+      <div className="tasks-section">
+        <h3>📋 Your Tasks ({tasks.length})</h3>
+
+        {tasks.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">📝</div>
+            <p>No tasks yet. Create your first task above!</p>
+          </div>
+        ) : (
+          <div className="tasks-grid">
+            {tasks.map((t) => (
+              <div key={t.id} className="task-card">
+                <div className="task-header">
+                  <h4 className="task-title">{t.title}</h4>
+                  <span className={`task-status ${getStatusClass(t.status)}`}>
+                    {t.status.replace("_", " ")}
+                  </span>
+                </div>
+
+                {t.description && <p className="task-description">{t.description}</p>}
+
+                <div className="task-actions">
+                  <button className="btn-danger" onClick={() => deleteTask(t.id)}>
+                    🗑️ Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
