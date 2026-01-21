@@ -5,7 +5,7 @@ import { fail } from "../utils/apiResponse";
 export function errorMiddleware(err: any, _req: Request, res: Response, _next: NextFunction) {
   if (err instanceof ZodError) {
     return res.status(400).json(
-      fail("Validation error", err.errors.map(e => ({
+      fail("Validation error", err.issues.map((e) => ({
         path: e.path.join("."),
         message: e.message
       })))

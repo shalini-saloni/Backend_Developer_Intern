@@ -7,7 +7,13 @@ function must(name: string): string {
   return v;
 }
 
-export const env = {
+export const env: {
+  PORT: number;
+  DATABASE_URL: string;
+  JWT_SECRET: string;
+  JWT_EXPIRES_IN: string;
+  CORS_ORIGIN: string;
+} = {
   PORT: Number(process.env.PORT ?? 8080),
   DATABASE_URL: must("DATABASE_URL"),
   JWT_SECRET: must("JWT_SECRET"),

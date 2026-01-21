@@ -1,0 +1,28 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.signJwt = signJwt;
+exports.verifyJwt = verifyJwt;
+exports.decodeJwt = decodeJwt;
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const env_1 = require("../config/env");
+function signJwt(payload) {
+    return jsonwebtoken_1.default.sign(payload, env_1.env.JWT_SECRET, { expiresIn: env_1.env.JWT_EXPIRES_IN });
+}
+function verifyJwt(token) {
+    try {
+        return jsonwebtoken_1.default.verify(token, env_1.env.JWT_SECRET);
+    }
+    catch (error) {
+        if (error instanceof jsonwebtoken_1.default.JsonWebTokenError) {
+            throw new Error(`Invalid token: ${error.message}`);
+        }
+        throw error;
+    }
+}
+function decodeJwt(token) {
+    return jsonwebtoken_1.default.decode(token);
+}
+//# sourceMappingURL=jwt.js.map

@@ -16,7 +16,7 @@ export async function list(req: AuthRequest, res: Response) {
 }
 
 export async function get(req: AuthRequest, res: Response) {
-  const task = await getTaskById(req.params.id);
+  const task = await getTaskById(req.params.id as string);
   if (!task) return res.status(404).json(fail("Task not found"));
 
   if (req.user!.role !== "ADMIN" && task.ownerId !== req.user!.userId) {
@@ -27,7 +27,7 @@ export async function get(req: AuthRequest, res: Response) {
 }
 
 export async function patch(req: AuthRequest, res: Response) {
-  const task = await getTaskById(req.params.id);
+  const task = await getTaskById(req.params.id as string);
   if (!task) return res.status(404).json(fail("Task not found"));
 
   if (req.user!.role !== "ADMIN" && task.ownerId !== req.user!.userId) {
@@ -35,18 +35,18 @@ export async function patch(req: AuthRequest, res: Response) {
   }
 
   const body = updateTaskSchema.parse(req.body);
-  const updated = await updateTask(req.params.id, body);
+  const updated = await updateTask(req.params.id as string, body);
   return res.status(200).json(ok(updated, "Task updated"));
 }
 
 export async function remove(req: AuthRequest, res: Response) {
-  const task = await getTaskById(req.params.id);
+  const task = await getTaskById(req.params.id as string);
   if (!task) return res.status(404).json(fail("Task not found"));
 
   if (req.user!.role !== "ADMIN" && task.ownerId !== req.user!.userId) {
     return res.status(403).json(fail("Forbidden"));
   }
 
-  await deleteTask(req.params.id);
+  await deleteTask(req.params.id as string);
   return res.status(200).json(ok({ id: req.params.id }, "Task deleted"));
 }
